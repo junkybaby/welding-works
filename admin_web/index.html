@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welding Works Admin</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand-block">
+        <div class="brand-title">Welding Works Admin</div>
+      </div>
+      <div class="header-right">
+        <div id="adminWelcome" class="muted hidden"></div>
+        <button id="logoutBtn" class="secondary hidden">Logout</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <div id="loginCard" class="card login-card">
+        <div class="panel-heading">
+          <div>
+            <h2>Admin Login</h2>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Email</label>
+            <input id="loginEmail" type="email" placeholder="admin@email.com" />
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <div class="password-row">
+              <input id="loginPassword" type="password" placeholder="........" />
+              <button id="togglePassword" class="secondary" type="button">Show</button>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button id="loginBtn">Sign in</button>
+        </div>
+        <div id="loginError" class="muted status-message"></div>
+      </div>
+
+      <div id="adminPanel" class="hidden">
+        <div class="card dashboard-shell">
+          <div class="panel-heading">
+            <div>
+              <h2>Administration</h2>
+            </div>
+          </div>
+          <div class="tabs main-tabs">
+            <div class="tab active" data-tab="users">Users</div>
+            <div class="tab" data-tab="assessed-welding">Assessed Welding</div>
+            <div class="tab" data-tab="criteria">Criteria</div>
+            <div class="tab" data-tab="audit">Audit Logs</div>
+          </div>
+        </div>
+
+        <div id="tab-users" class="card section-card">
+          <div class="panel-heading compact-heading">
+            <div>
+              <div class="eyebrow">Manage Access</div>
+              <h3>Users</h3>
+              <div class="section-copy">Update access, status, and verification or create a trainer account in one place.</div>
+            </div>
+          </div>
+          <div class="card inset-card trainer-form-card">
+            <div class="section-header">
+              <div>
+                <h4 style="margin: 0;">Add Trainer</h4>
+                <div class="muted">Create a verified trainer account directly from the admin page.</div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label>First Name</label>
+                <input id="trainerFirstName" type="text" placeholder="Juan" />
+              </div>
+              <div class="field">
+                <label>Middle Name</label>
+                <input id="trainerMiddleName" type="text" placeholder="Santos" />
+              </div>
+              <div class="field">
+                <label>Last Name</label>
+                <input id="trainerLastName" type="text" placeholder="Dela Cruz" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label>Email</label>
+                <input id="trainerEmail" type="email" placeholder="trainer@email.com" />
+              </div>
+              <div class="field">
+                <label>Username</label>
+                <input id="trainerUsername" type="text" placeholder="trainer01" />
+              </div>
+              <div class="field">
+                <label>Password</label>
+                <input id="trainerPassword" type="password" placeholder="At least 8 characters" />
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <select id="trainerStatus">
+                  <option value="active">active</option>
+                  <option value="inactive">inactive</option>
+                </select>
+              </div>
+            </div>
+            <div class="toolbar">
+              <button id="addTrainerBtn" type="button">Add Trainer</button>
+              <div id="trainerFormMessage" class="muted status-message"></div>
+            </div>
+          </div>
+          <div class="table-shell">
+            <table id="usersTable">
+              <thead>
+                <tr>
+                  <th class="users-col">Name</th>
+                  <th class="email-col">Email</th>
+                  <th class="role-col">Role</th>
+                  <th class="status-col">Status</th>
+                  <th class="verified-col">Verified</th>
+                  <th class="action-col-users">Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="tab-assessed-welding" class="card section-card hidden">
+          <div class="panel-heading compact-heading">
+            <div>
+              <div class="eyebrow">Assessment Review</div>
+              <h3>Assessed Welding</h3>
+              <div class="section-copy">Review batch outputs, trainer ownership, trainee status, and saved images.</div>
+            </div>
+          </div>
+          <div class="tabs sub-tabs">
+            <div class="tab active" data-assessed-subtab="batch-list">Batch Outputs</div>
+            <div class="tab" data-assessed-subtab="batch-detail">Selected Batch</div>
+          </div>
+          <div id="assessed-batch-list">
+            <div class="toolbar">
+              <div class="field compact-field">
+                <label>Batch Status</label>
+                <select id="batchStatusFilter">
+                  <option value="">all</option>
+                  <option value="active">active</option>
+                  <option value="archived">archived</option>
+                </select>
+              </div>
+              <div class="field compact-field">
+                <label>Trainer Search</label>
+                <input id="batchTrainerFilter" type="text" placeholder="Search Trainer" />
+              </div>
+              <button id="refreshAssessedBtn" type="button">Search</button>
+            </div>
+            <div id="assessedBatchMessage" class="muted status-message"></div>
+            <div class="table-shell">
+              <table id="assessedBatchesTable">
+                <thead>
+                  <tr>
+                    <th>Batch</th>
+                    <th>Trainer</th>
+                    <th>Status</th>
+                    <th>Trainees</th>
+                    <th>Assessed</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button id="assessedPrevBtn" class="secondary" type="button">Previous</button>
+              <span id="assessedPageInfo" class="muted">Page 1 of 1</span>
+              <button id="assessedNextBtn" class="secondary" type="button">Next</button>
+            </div>
+          </div>
+          <div id="assessed-batch-detail" class="hidden">
+            <div class="section-header" style="margin-top: 16px;">
+              <div id="selectedBatchSummary" class="summary-card muted" style="margin-top: 0; flex: 1;">Select a batch to view its outputs.</div>
+              <button id="exportSelectedBatchBtn" type="button" class="secondary">Export ZIP</button>
+            </div>
+            <div class="table-shell">
+              <table id="assessedOutputsTable">
+                <thead>
+                  <tr>
+                    <th>Trainee</th>
+                    <th>Center</th>
+                    <th>Status</th>
+                    <th>Result</th>
+                    <th>Assessed Date</th>
+                    <th>Demo Output</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-criteria" class="card section-card hidden">
+          <div class="panel-heading compact-heading">
+            <div>
+              <div class="eyebrow">Assessment Setup</div>
+              <h3>Criteria</h3>
+              <div class="section-copy">Maintain checklist items, assessment criteria, and grading rows.</div>
+            </div>
+          </div>
+          <div class="tabs sub-tabs">
+            <div class="tab active" data-subtab="competency">Competency Checklist</div>
+            <div class="tab" data-subtab="assessment">Assessment</div>
+            <div class="tab" data-subtab="grading">Grading Sheet</div>
+          </div>
+
+          <div id="criteria-competency">
+            <div class="table-shell">
+              <table id="competencyTable">
+                <thead>
+                  <tr>
+                    <th class="cat-col">Category</th>
+                    <th class="title-col">Title</th>
+                    <th class="active-col">Active</th>
+                    <th class="action-col">Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="criteria-assessment" class="hidden">
+            <div class="table-shell">
+              <table id="assessmentTable">
+                <thead>
+                  <tr>
+                    <th class="cat-col">Category</th>
+                    <th class="title-col">Title</th>
+                    <th class="active-col">Active</th>
+                    <th class="action-col">Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="criteria-grading" class="hidden">
+            <div class="table-shell">
+              <table id="gradingTable">
+                <thead>
+                  <tr>
+                    <th class="title-col">Component</th>
+                    <th class="percent-col">Percent</th>
+                    <th class="range-col">Range</th>
+                    <th class="remark-col">Remark</th>
+                    <th class="active-col">Active</th>
+                    <th class="action-col">Action</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-audit" class="card section-card hidden">
+          <div class="panel-heading compact-heading">
+            <div>
+              <div class="eyebrow">Activity History</div>
+              <h3>Audit Logs</h3>
+              <div class="section-copy">Track recent admin actions and open any record for full detail.</div>
+            </div>
+          </div>
+          <div class="table-shell">
+            <table id="auditTable">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Actor</th>
+                  <th>Action</th>
+                  <th>Target</th>
+                  <th>Details</th>
+                  <th>View</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button id="auditPrevBtn" class="secondary" type="button">Previous</button>
+            <span id="auditPageInfo" class="muted">Page 1 of 1</span>
+            <button id="auditNextBtn" class="secondary" type="button">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="compModal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Add Competency</h3>
+          <button id="compModalClose" class="secondary" type="button">X</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Category</label>
+            <select id="modalCompCategory">
+              <option value="Basic">Basic</option>
+              <option value="Common">Common</option>
+              <option value="Core">Core</option>
+              <option value="Perform root pass">Perform root pass</option>
+              <option value="Clean root pass">Clean root pass</option>
+              <option value="Weld subsequent/filling passes">Weld subsequent/filling passes</option>
+              <option value="Perform capping">Perform capping</option>
+              <option value="Defects (Surface Level)">Defects (Surface Level)</option>
+              <option value="Defects (Non-Surface Level)">Defects (Non-Surface Level)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Title</label>
+            <input id="modalCompTitle" placeholder="Competency title" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="compModalSave">Save</button>
+          <button id="compModalCancel" class="secondary" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="gradeModal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Add Grade Row</h3>
+          <button id="gradeModalClose" class="secondary" type="button">X</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Category</label>
+            <select id="modalGradeCategory">
+              <option value="Grading">Grading</option>
+              <option value="Scale">Scale</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Component</label>
+            <input id="modalGradeTitle" placeholder="Lecture Units (Total Grade)" />
+          </div>
+          <div class="field">
+            <label>Percent</label>
+            <input id="modalGradePercent" type="number" step="0.01" placeholder="25" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Range</label>
+            <input id="modalGradeRange" placeholder="90-100" />
+          </div>
+          <div class="field">
+            <label>Remark</label>
+            <input id="modalGradeRemark" placeholder="Competent" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button id="gradeModalSave">Save</button>
+          <button id="gradeModalCancel" class="secondary" type="button">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="auditModal" class="modal hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Audit Log Detail</h3>
+          <button id="auditModalClose" class="secondary" type="button">X</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Time</label>
+            <div id="auditDetailTime" class="muted"></div>
+          </div>
+          <div class="field">
+            <label>Actor</label>
+            <div id="auditDetailActor" class="muted"></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Action</label>
+            <div id="auditDetailAction" class="muted"></div>
+          </div>
+          <div class="field">
+            <label>Target</label>
+            <div id="auditDetailTarget" class="muted"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Details</label>
+          <pre id="auditDetailDetails" class="muted" style="white-space: pre-wrap; margin: 0;"></pre>
+        </div>
+        <div class="modal-actions">
+          <button id="auditModalCloseBtn" class="secondary" type="button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./runtime-config.js?v=20260402"></script>
+    <script src="./config.js?v=20260402"></script>
+    <script src="./app.js?v=20260401"></script>
+  </body>
+</html>
