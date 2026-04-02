@@ -35,11 +35,12 @@ try {
   ");
   $update->execute([$otp, $row["id"]]);
 
+  if (getenv("DEV_SHOW_OTP") === "1") {
+    respond("success", "OTP resent in debug mode.", ["otp" => $otp]);
+  }
+
   $sent = send_otp_email($email, $otp);
   if (!$sent) {
-    if (getenv("DEV_SHOW_OTP") === "1") {
-      respond("success", "OTP resent in debug mode.", ["otp" => $otp]);
-    }
     respond("error", "Failed to send OTP email.", [
       "otp" => $otp,
       "mail_error" => mail_last_error(),

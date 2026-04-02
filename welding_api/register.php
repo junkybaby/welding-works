@@ -70,13 +70,14 @@ try {
     audit_log("user_created", $email, $role, "user", $newId);
   }
 
+  if (getenv("DEV_SHOW_OTP") === "1") {
+    respond("success", "Registration successful. OTP sent in debug mode.", [
+      "otp" => $otp,
+    ]);
+  }
+
   $sent = send_otp_email($email, $otp);
   if (!$sent) {
-    if (getenv("DEV_SHOW_OTP") === "1") {
-      respond("success", "Registration successful. OTP sent in debug mode.", [
-        "otp" => $otp,
-      ]);
-    }
     respond("error", "Failed to send OTP email.", [
       "otp" => $otp,
       "mail_error" => mail_last_error(),
