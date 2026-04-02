@@ -2101,54 +2101,110 @@ class _ScoreRadio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget buildChoice(int optionValue) {
-      return Expanded(
-        flex: _optionFlex,
-        child: Center(
-          child: SizedBox(
-            width: 44,
-            child: Radio<int>(
-              value: optionValue,
-              groupValue: value,
-              visualDensity: VisualDensity.compact,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              activeColor: AdminMobilePalette.primary,
-              onChanged: (next) {
-                if (next != null) {
-                  onChanged(next);
-                }
-              },
-            ),
-          ),
-        ),
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
 
-    Widget buildTapTarget(int optionValue) {
-      return InkWell(
-        onTap: () => onChanged(optionValue),
-        borderRadius: BorderRadius.circular(999),
-        child: buildChoice(optionValue),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: _textFlex,
-            child: Text(
-              item,
-              style: const TextStyle(height: 1.3),
+        Widget buildChoice({
+          required int optionValue,
+          required String label,
+        }) {
+          final selected = value == optionValue;
+          return Expanded(
+            child: InkWell(
+              onTap: () => onChanged(optionValue),
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: selected
+                        ? AdminMobilePalette.primary
+                        : const Color(0xFFD4DCEB),
+                  ),
+                  color: selected
+                      ? const Color(0xFFEAF2FF)
+                      : Colors.transparent,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Radio<int>(
+                        value: optionValue,
+                        groupValue: value,
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        activeColor: AdminMobilePalette.primary,
+                        onChanged: (next) {
+                          if (next != null) {
+                            onChanged(next);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
+          );
+        }
+
+        final positiveLabel = _isDefectItem(item) ? "Seen" : "Performed";
+        final negativeLabel = _isDefectItem(item) ? "Not Seen" : "Not Performed";
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item,
+                style: const TextStyle(height: 1.35),
+              ),
+              const SizedBox(height: 10),
+              if (isNarrow)
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        buildChoice(optionValue: 1, label: positiveLabel),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        buildChoice(optionValue: 0, label: negativeLabel),
+                      ],
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    buildChoice(optionValue: 1, label: positiveLabel),
+                    const SizedBox(width: 10),
+                    buildChoice(optionValue: 0, label: negativeLabel),
+                  ],
+                ),
+            ],
           ),
-          const SizedBox(width: 8),
-          buildTapTarget(1),
-          buildTapTarget(0),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -2166,36 +2222,42 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final positiveLabel = isDefect ? "Seen" : "Performed";
     final negativeLabel = isDefect ? "Not Seen" : "Not Performed";
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
 
-    Widget buildOptionLabel(String text) {
-      return Expanded(
-        flex: _ScoreRadio._optionFlex,
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-            color: AdminMobilePalette.primary,
-          ),
-        ),
-      );
-    }
+        Widget buildOptionLabel(String text) {
+          return Expanded(
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                color: AdminMobilePalette.primary,
+              ),
+            ),
+          );
+        }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: _ScoreRadio._textFlex,
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        const SizedBox(width: 8),
-        buildOptionLabel(positiveLabel),
-        buildOptionLabel(negativeLabel),
-      ],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                buildOptionLabel(positiveLabel),
+                SizedBox(width: isNarrow ? 8 : 10),
+                buildOptionLabel(negativeLabel),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
