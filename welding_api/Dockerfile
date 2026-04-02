@@ -5,6 +5,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
+        python3-venv \
         libgl1 \
         libglib2.0-0 \
     && docker-php-ext-install pdo_mysql \
@@ -13,7 +14,11 @@ RUN apt-get update \
 WORKDIR /app
 COPY . /app
 
-RUN python3 -m pip install --no-cache-dir -r /app/requirements.txt
+RUN python3 -m venv /opt/yolo-venv \
+    && /opt/yolo-venv/bin/python -m pip install --no-cache-dir --upgrade pip \
+    && /opt/yolo-venv/bin/python -m pip install --no-cache-dir -r /app/requirements.txt
+
+ENV YOLO_PYTHON_PATH=/opt/yolo-venv/bin/python
 
 EXPOSE 8080
 
