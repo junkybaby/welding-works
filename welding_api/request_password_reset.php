@@ -35,7 +35,7 @@ try {
   if (!$sent) {
     respond("error", "Failed to send OTP email.", [
       "otp" => $otp,
-      "debug" => ["mail_error" => mail_last_error()],
+      "mail_error" => mail_last_error(),
     ]);
   }
 
