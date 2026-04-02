@@ -1,0 +1,4 @@
+[build]
+  base = "admin_web"
+  command = ""
+  publish = "."
