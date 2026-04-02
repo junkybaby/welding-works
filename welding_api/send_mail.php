@@ -133,18 +133,18 @@ function send_mail($toEmail, $subject, $bodyText, $options = []) {
     $timeout = intval($cfg["SMTP_TIMEOUT"] ?? 12);
 
     $remote = ($secure === "ssl" ? "ssl://" : "") . $host . ":" . $port;
-    $stream = stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
+    $stream = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
     if (!$stream) {
       $GLOBALS["MAIL_LAST_ERROR"] = "SMTP connect failed ({$errno}): {$errstr}";
       return false;
     }
 
-    stream_set_timeout($stream, $timeout);
+    @stream_set_timeout($stream, $timeout);
 
     $smtpRead = function () use ($stream) {
       $lines = [];
       while (!feof($stream)) {
-        $line = fgets($stream, 515);
+        $line = @fgets($stream, 515);
         if ($line === false) break;
         $lines[] = rtrim($line, "\r\n");
         if (strlen($line) >= 4 && ctype_digit(substr($line, 0, 3)) && $line[3] === " ") {
@@ -155,7 +155,7 @@ function send_mail($toEmail, $subject, $bodyText, $options = []) {
     };
 
     $smtpWrite = function (string $command) use ($stream) {
-      fwrite($stream, $command . "\r\n");
+      @fwrite($stream, $command . "\r\n");
     };
 
     $expect = function (array $codes, string $context) use ($smtpRead) {
@@ -175,7 +175,7 @@ function send_mail($toEmail, $subject, $bodyText, $options = []) {
     if ($secure === "tls") {
       $smtpWrite("STARTTLS");
       $expect([220], "STARTTLS");
-      if (!stream_socket_enable_crypto($stream, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+      if (@stream_socket_enable_crypto($stream, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) {
         throw new RuntimeException("Failed to enable TLS.");
       }
       $smtpWrite("EHLO localhost");
