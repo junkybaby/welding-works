@@ -162,18 +162,35 @@ $cmd = escapeshellarg($pythonPath)
   . " --model " . escapeshellarg($modelPath)
   . " --source " . escapeshellarg($imagePath)
   . " --project " . escapeshellarg($outputsDir)
-  . " --name " . escapeshellarg($runName);
+  . " --name " . escapeshellarg($runName)
+  . " 2>&1";
 
 $outputLines = [];
 $exitCode = 0;
 exec($cmd, $outputLines, $exitCode);
 if ($exitCode !== 0) {
+  error_log("[assess_demo_yolo.php] YOLO command failed: " . implode("\n", $outputLines));
   respond("error", "YOLO local inference failed. Exit code: " . $exitCode);
 }
 
 $payloadRaw = trim(implode("\n", $outputLines));
 $payload = json_decode($payloadRaw, true);
 if (!is_array($payload)) {
+  for ($i = count($outputLines) - 1; $i >= 0; $i--) {
+    $candidate = trim((string)$outputLines[$i]);
+    if ($candidate === "") {
+      continue;
+    }
+    $decoded = json_decode($candidate, true);
+    if (is_array($decoded)) {
+      $payload = $decoded;
+      $payloadRaw = $candidate;
+      break;
+    }
+  }
+}
+if (!is_array($payload)) {
+  error_log("[assess_demo_yolo.php] Invalid YOLO output: " . $payloadRaw);
   respond("error", "Invalid YOLO local output.");
 }
 
