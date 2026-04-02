@@ -248,11 +248,24 @@ class _AssessmentScreenState extends State<AssessmentScreen> {
       return normalizedSlashes;
     }
 
-    if (normalizedSlashes.startsWith("/")) {
-      final fixedPath = normalizedSlashes.startsWith("/welding_api/")
+    final isDemoAsset =
+        normalizedSlashes.startsWith("/demo_archive/") ||
+        normalizedSlashes.startsWith("/yolo_uploads/") ||
+        normalizedSlashes.startsWith("/yolo_outputs/") ||
+        normalizedSlashes.startsWith("/welding_api/demo_archive/") ||
+        normalizedSlashes.startsWith("/welding_api/yolo_uploads/") ||
+        normalizedSlashes.startsWith("/welding_api/yolo_outputs/");
+
+    if (isDemoAsset) {
+      final assetPath = normalizedSlashes.startsWith("/welding_api/")
           ? normalizedSlashes
           : "/welding_api$normalizedSlashes";
-      return "${base.scheme}://${base.host}${base.hasPort ? ":${base.port}" : ""}$fixedPath";
+      final encodedPath = Uri.encodeQueryComponent(assetPath);
+      return "${AppConfig.weldingApi}/demo_asset.php?path=$encodedPath";
+    }
+
+    if (normalizedSlashes.startsWith("/")) {
+      return "${base.scheme}://${base.host}${base.hasPort ? ":${base.port}" : ""}$normalizedSlashes";
     }
 
     return "${AppConfig.weldingApi}/$normalizedSlashes";
