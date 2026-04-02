@@ -118,20 +118,116 @@ function send_mail($toEmail, $subject, $bodyText, $options = []) {
     } catch (Throwable $e) {
       $GLOBALS["MAIL_LAST_ERROR"] = $e->getMessage();
     }
-  } else {
-    $headers = "From: {$from}\r\n";
-    $sent = @mail($toEmail, $subject, $bodyText, $headers);
-    if ($sent) {
-      return true;
-    }
-    $GLOBALS["MAIL_LAST_ERROR"] = "php mail() failed";
   }
 
-  // Local/dev fallback: don't block flow when email transport isn't configured.
-  if (getenv("DEV_SHOW_OTP") === "1") {
+  // Native SMTP fallback for deployments without PHPMailer or mail().
+  try {
+    if ($smtpUser === "" || $smtpPass === "") {
+      $GLOBALS["MAIL_LAST_ERROR"] = "Missing SMTP_USER or SMTP_PASS in mail_config.php.";
+      return false;
+    }
+
+    $host = $cfg["SMTP_HOST"] ?? "smtp.gmail.com";
+    $port = intval($cfg["SMTP_PORT"] ?? 587);
+    $secure = strtolower(trim((string)($cfg["SMTP_SECURE"] ?? "tls")));
+    $timeout = intval($cfg["SMTP_TIMEOUT"] ?? 12);
+
+    $remote = ($secure === "ssl" ? "ssl://" : "") . $host . ":" . $port;
+    $stream = stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT);
+    if (!$stream) {
+      $GLOBALS["MAIL_LAST_ERROR"] = "SMTP connect failed ({$errno}): {$errstr}";
+      return false;
+    }
+
+    stream_set_timeout($stream, $timeout);
+
+    $smtpRead = function () use ($stream) {
+      $lines = [];
+      while (!feof($stream)) {
+        $line = fgets($stream, 515);
+        if ($line === false) break;
+        $lines[] = rtrim($line, "\r\n");
+        if (strlen($line) >= 4 && ctype_digit(substr($line, 0, 3)) && $line[3] === " ") {
+          break;
+        }
+      }
+      return $lines;
+    };
+
+    $smtpWrite = function (string $command) use ($stream) {
+      fwrite($stream, $command . "\r\n");
+    };
+
+    $expect = function (array $codes, string $context) use ($smtpRead) {
+      $lines = $smtpRead();
+      $first = $lines[0] ?? "";
+      $code = intval(substr($first, 0, 3));
+      if (!in_array($code, $codes, true)) {
+        throw new RuntimeException($context . ": " . implode(" | ", $lines));
+      }
+      return $lines;
+    };
+
+    $expect([220], "SMTP banner");
+    $smtpWrite("EHLO localhost");
+    $expect([250], "EHLO");
+
+    if ($secure === "tls") {
+      $smtpWrite("STARTTLS");
+      $expect([220], "STARTTLS");
+      if (!stream_socket_enable_crypto($stream, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+        throw new RuntimeException("Failed to enable TLS.");
+      }
+      $smtpWrite("EHLO localhost");
+      $expect([250], "EHLO after STARTTLS");
+    }
+
+    $smtpWrite("AUTH LOGIN");
+    $expect([334], "AUTH LOGIN");
+    $smtpWrite(base64_encode($smtpUser));
+    $expect([334], "SMTP username");
+    $smtpWrite(base64_encode($smtpPass));
+    $expect([235], "SMTP password");
+
+    $recipientList = array_merge([$toEmail], $ccList);
+    $messageHeaders = [
+      "From: {$fromName} <{$from}>",
+      "To: {$toEmail}",
+      "Subject: {$subject}",
+      "MIME-Version: 1.0",
+      "Content-Type: text/plain; charset=UTF-8",
+      "Content-Transfer-Encoding: 8bit",
+    ];
+    if (!empty($ccList)) {
+      $messageHeaders[] = "Cc: " . implode(", ", $ccList);
+    }
+    $message = implode("\r\n", $messageHeaders) . "\r\n\r\n" . $bodyText;
+    $message = preg_replace("/^\./m", "..", $message);
+
+    $smtpWrite("MAIL FROM:<{$from}>");
+    $expect([250], "MAIL FROM");
+    foreach ($recipientList as $recipient) {
+      $smtpWrite("RCPT TO:<{$recipient}>");
+      $expect([250, 251], "RCPT TO");
+    }
+    $smtpWrite("DATA");
+    $expect([354], "DATA");
+    $smtpWrite($message . "\r\n.");
+    $expect([250], "message body");
+    $smtpWrite("QUIT");
+    fclose($stream);
     return true;
   }
-  return false;
+  catch (Throwable $e) {
+    $GLOBALS["MAIL_LAST_ERROR"] = $e->getMessage();
+    if (isset($stream) && is_resource($stream)) {
+      fclose($stream);
+    }
+    if (getenv("DEV_SHOW_OTP") === "1") {
+      return true;
+    }
+    return false;
+  }
 }
 
 function send_output_mail($toEmail, $subject, $bodyText) {
