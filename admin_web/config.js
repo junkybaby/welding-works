@@ -1,14 +1,9 @@
 function resolveApiBase() {
-  const defaultApiBase = "";
+  const defaultApiBase = "https://welding-api-production.up.railway.app";
   const params = new URLSearchParams(window.location.search);
   const queryOverride = (params.get("api_base") || "").trim();
   if (queryOverride) {
     return queryOverride.replace(/\/+$/, "");
-  }
-
-  const storedOverride = (localStorage.getItem("admin_api_base") || "").trim();
-  if (storedOverride) {
-    return storedOverride.replace(/\/+$/, "");
   }
 
   const runtimeOverride = typeof window.__ADMIN_API_BASE__ === "string"
