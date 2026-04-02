@@ -41,9 +41,15 @@ try {
 
   $sent = send_otp_email($email, $otp);
   if (!$sent) {
+    $mailError = mail_last_error();
+    error_log(sprintf(
+      "[resend_otp.php] OTP email failed for %s: %s",
+      $email,
+      $mailError ?? "unknown mail error"
+    ));
     respond("error", "Failed to send OTP email.", [
       "otp" => $otp,
-      "mail_error" => mail_last_error(),
+      "mail_error" => $mailError,
     ]);
   }
 
