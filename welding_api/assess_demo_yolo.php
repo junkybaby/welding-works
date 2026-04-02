@@ -115,6 +115,7 @@ foreach ($pythonCandidates as $candidatePython) {
 }
 $scriptPath = __DIR__ . "/yolo_infer.py";
 $projectRoots = array_values(array_unique(array_filter([
+  realpath(__DIR__) ?: __DIR__,
   realpath(__DIR__ . "/..") ?: (__DIR__ . "/.."),
   getenv("YOLO_PROJECT_ROOT") ?: null,
 ])));
