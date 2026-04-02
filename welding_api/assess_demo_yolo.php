@@ -84,26 +84,43 @@ if (!move_uploaded_file($upload["tmp_name"], $imagePath)) {
 }
 
 // Run local YOLO inference (no external service)
-$systemPython = "C:\\Users\\Kimbap\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
-$workspaceRoot = "C:\\Users\\Kimbap\\Desktop\\Flutter-Work\\Weld Works\\welding_works";
-$venvCandidates = [
+$pythonCandidates = array_filter(array_unique([
+  trim((string)getenv("YOLO_PYTHON_PATH")),
+  "python3",
+  "python",
+  "/usr/local/bin/python3",
+  "/usr/bin/python3",
+  "C:\\Users\\Kimbap\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
   __DIR__ . "/../yolo_service/.venv/Scripts/python.exe",
-  $workspaceRoot . "\\yolo_service\\.venv\\Scripts\\python.exe",
-];
-$venvPython = "";
-foreach ($venvCandidates as $candidatePython) {
-  if (file_exists($candidatePython)) {
-    $venvPython = $candidatePython;
+  __DIR__ . "/../yolo_service/.venv/bin/python",
+]));
+$pythonPath = "";
+foreach ($pythonCandidates as $candidatePython) {
+  if ($candidatePython === "") {
+    continue;
+  }
+  if (str_contains($candidatePython, "\\") || str_contains($candidatePython, "/")) {
+    if (file_exists($candidatePython)) {
+      $pythonPath = $candidatePython;
+      break;
+    }
+    continue;
+  }
+
+  $resolved = trim((string)shell_exec("command -v " . escapeshellarg($candidatePython) . " 2>/dev/null"));
+  if ($resolved !== "") {
+    $pythonPath = $resolved;
     break;
   }
 }
-$pythonPath = file_exists($systemPython) ? $systemPython : $venvPython;
 $scriptPath = __DIR__ . "/yolo_infer.py";
-$projectRoots = array_values(array_unique([
+$projectRoots = array_values(array_unique(array_filter([
   realpath(__DIR__ . "/..") ?: (__DIR__ . "/.."),
-  $workspaceRoot,
-]));
+  getenv("YOLO_PROJECT_ROOT") ?: null,
+])));
 $modelRelativePaths = [
+  "welding_api/models/best.pt",
+  "models/best.pt",
   "runs\\segment\\runs\\yolo_runs\\welding2026C-v3-seg5\\weights\\best.pt",
   "runs\\yolo_runs\\welding2026C-v3-seg\\weights\\best.pt",
   "runs\\segment\\runs\\yolo_runs\\welding2026C-v3-seg\\weights\\best.pt",
@@ -114,7 +131,8 @@ $modelRelativePaths = [
 $preferredModelPaths = [];
 foreach ($projectRoots as $projectRoot) {
   foreach ($modelRelativePaths as $relativePath) {
-    $preferredModelPaths[] = rtrim($projectRoot, "\\/") . "\\" . $relativePath;
+    $normalizedRelativePath = str_replace(["\\", "/"], DIRECTORY_SEPARATOR, $relativePath);
+    $preferredModelPaths[] = rtrim($projectRoot, "\\/") . DIRECTORY_SEPARATOR . $normalizedRelativePath;
   }
 }
 $modelPath = getenv("YOLO_MODEL_PATH") ?: "";
@@ -128,7 +146,7 @@ if ($modelPath === "") {
 }
 
 if (!file_exists($pythonPath)) {
-  respond("error", "Local Python not found. Expected: " . $pythonPath);
+  respond("error", "Local Python not found. Checked: " . implode(", ", $pythonCandidates));
 }
 if (!file_exists($scriptPath)) {
   respond("error", "Local YOLO script not found. Expected: " . $scriptPath);

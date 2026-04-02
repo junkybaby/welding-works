@@ -62,6 +62,7 @@ welding_api/mail_config.php
 # Large models / datasets / runs
 *.pt
 *.zip
+!welding_api/models/best.pt
 runs/
 **/runs/
 YOLO DATASET/
